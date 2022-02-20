@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io';
 
 class CommunityPageScreen extends StatefulWidget {
   String name = "";
@@ -20,12 +21,13 @@ class CommunityPageScreen extends StatefulWidget {
 
 class _CommunityPageScreenState extends State<CommunityPageScreen> {
   late FToast fToast;
-
+  var image = "";
   var userList = [];
   var userInfo = [];
   var numOfUsers = 0;
   int hobbiesnum = 10;
   bool joined = true;
+  bool imageretrieved = false;
 
   static const _insets = 16.0;
   BannerAd? _inlineAdaptiveAd;
@@ -107,6 +109,8 @@ class _CommunityPageScreenState extends State<CommunityPageScreen> {
         userList = userList.sublist(
           1,
         );
+        image = document['image'];
+        // imageretrieved = true;
         if (userList.contains(FirebaseAuth.instance.currentUser!.uid)) {
           joined = true;
         } else {
@@ -120,8 +124,11 @@ class _CommunityPageScreenState extends State<CommunityPageScreen> {
             });
           });
         }
+        imageretrieved = true;
+        sleep(Duration(seconds: 1));
       });
     });
+    // imageretrieved = true;
   }
 
   _showToast() {
@@ -244,366 +251,383 @@ class _CommunityPageScreenState extends State<CommunityPageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Image.asset("assets/images/community_bg2.png"),
-          // Image.asset("assets/images/community_bg1.png"),
-          SizedBox(
-              child: Image.asset("assets/images/" + widget.name + ".jpg",
-                  width: MediaQuery.of(context).size.width, fit: BoxFit.fill),
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height / 20 * 7),
-          CustomScrollView(
-            slivers: [
-              SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    const SizedBox(height: 210),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            if (joined == true) {
-                              unjoin();
-                            } else {
-                              if (hobbiesnum < 5) {
-                                join();
+    try {
+      return Scaffold(
+        body: Stack(
+          children: [
+            Image.asset("assets/images/community_bg2.png"),
+            // Image.asset("assets/images/community_bg1.png"),
+            SizedBox(
+                child: imageretrieved
+                    ? Image.network(image, fit: BoxFit.fill)
+                    : Container(
+                        margin: const EdgeInsets.all(100.0),
+                        child: Text(
+                          "Image is being retrieved...",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                      ),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height / 20 * 7),
+            CustomScrollView(
+              slivers: [
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      const SizedBox(height: 210),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (joined == true) {
+                                unjoin();
                               } else {
-                                _showToast();
+                                if (hobbiesnum < 5) {
+                                  join();
+                                } else {
+                                  _showToast();
+                                }
                               }
-                            }
-                          },
-                          child: Container(
-                            width: MediaQuery.of(context).size.width * 0.7,
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              decoration: BoxDecoration(
+                                color: (joined == true)
+                                    ? Colors.grey
+                                    : AppTheme.secondaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 16),
+                              child: Center(
+                                child: (joined == true)
+                                    ? Text(
+                                        "Joined",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 18),
+                                      )
+                                    : Text(
+                                        "Join",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 18),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
                             decoration: BoxDecoration(
-                              color: (joined == true)
-                                  ? Colors.grey
-                                  : AppTheme.secondaryColor,
+                              color: AppTheme.primaryColor,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 16),
-                            child: Center(
-                              child: (joined == true)
-                                  ? Text(
-                                      "Joined",
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    )
-                                  : Text(
-                                      "Join",
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
+                                horizontal: 16, vertical: 16),
+                            child: const Icon(
+                              Icons.share,
+                              color: Colors.white,
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      OrientationBuilder(
+                        builder: (context, orientation) {
+                          if (_currentOrientation == orientation &&
+                              _inlineAdaptiveAd != null &&
+                              _isLoaded &&
+                              _adSize != null) {
+                            return Align(
+                                child: Container(
+                              width: _adWidth,
+                              height: _adSize!.height.toDouble(),
+                              child: AdWidget(
+                                ad: _inlineAdaptiveAd!,
+                              ),
+                            ));
+                          }
+                          // Reload the ad if the orientation changes.
+                          if (_currentOrientation != orientation) {
+                            _currentOrientation = orientation;
+                            _loadAd();
+                          }
+                          return Container();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (joined) {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) =>
+                                    MemberListScreen(name: widget.name)));
+                          }
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.all(16),
+                          // height: 94,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
+                            color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          child: const Icon(
-                            Icons.share,
-                            color: Colors.white,
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    OrientationBuilder(
-                      builder: (context, orientation) {
-                        if (_currentOrientation == orientation &&
-                            _inlineAdaptiveAd != null &&
-                            _isLoaded &&
-                            _adSize != null) {
-                          return Align(
-                              child: Container(
-                            width: _adWidth,
-                            height: _adSize!.height.toDouble(),
-                            child: AdWidget(
-                              ad: _inlineAdaptiveAd!,
-                            ),
-                          ));
-                        }
-                        // Reload the ad if the orientation changes.
-                        if (_currentOrientation != orientation) {
-                          _currentOrientation = orientation;
-                          _loadAd();
-                        }
-                        return Container();
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        if (joined) {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) =>
-                                  MemberListScreen(name: widget.name)));
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        padding: const EdgeInsets.all(16),
-                        // height: 94,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Members List  ",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                    Text(
-                                      userList.length.toString(),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  height: 40,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                  child: Stack(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
                                     children: [
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        margin: const EdgeInsets.only(left: 96),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade100,
-                                            width: 5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(90),
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/images/user2.png"),
-                                          ),
+                                      Text(
+                                        "Members List  ",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
                                         ),
                                       ),
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        margin: const EdgeInsets.only(left: 72),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade100,
-                                            width: 5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(90),
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/images/user2.png"),
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        margin: const EdgeInsets.only(left: 48),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade100,
-                                            width: 5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(90),
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/images/user2.png"),
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        margin: const EdgeInsets.only(left: 24),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade100,
-                                            width: 5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(90),
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/images/user2.png"),
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        height: 40,
-                                        width: 40,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade100,
-                                            width: 5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(90),
-                                          image: const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/images/user2.png"),
-                                          ),
+                                      Text(
+                                        userList.length.toString(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey,
                                         ),
                                       ),
                                     ],
                                   ),
-                                )
-                              ],
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              color: AppTheme.primaryColor,
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        if (joined) {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) =>
-                                  CommunityWallScreen(name: widget.name)));
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        padding: const EdgeInsets.all(16),
-                        height: 94,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: const [
-                                    Text(
-                                      "Community Wall",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    height: 40,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.7,
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          margin:
+                                              const EdgeInsets.only(left: 96),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade100,
+                                              width: 5,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(90),
+                                            image: const DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/user2.png"),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          margin:
+                                              const EdgeInsets.only(left: 72),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade100,
+                                              width: 5,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(90),
+                                            image: const DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/user2.png"),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          margin:
+                                              const EdgeInsets.only(left: 48),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade100,
+                                              width: 5,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(90),
+                                            image: const DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/user2.png"),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          margin:
+                                              const EdgeInsets.only(left: 24),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade100,
+                                              width: 5,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(90),
+                                            image: const DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/user2.png"),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          height: 40,
+                                          width: 40,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade100,
+                                              width: 5,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(90),
+                                            image: const DecorationImage(
+                                              image: AssetImage(
+                                                  "assets/images/user2.png"),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  "Share, read, watch contents about\nthis community.",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              color: AppTheme.primaryColor,
-                            )
-                          ],
+                                  )
+                                ],
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppTheme.primaryColor,
+                              )
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        if (joined) {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) =>
-                                  MembersNearScreen(name: widget.name)));
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        padding: const EdgeInsets.all(16),
-                        height: 94,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: const [
-                                    Text(
-                                      "Near members to you",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (joined) {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) =>
+                                    CommunityWallScreen(name: widget.name)));
+                          }
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.all(16),
+                          height: 94,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: const [
+                                      Text(
+                                        "Community Wall",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  "Find and contact with members within\n80km range",
-                                  style: TextStyle(
-                                    color: Colors.grey,
+                                    ],
                                   ),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              color: AppTheme.primaryColor,
-                            )
-                          ],
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    "Share, read, watch contents about\nthis community.",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppTheme.primaryColor,
+                              )
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          if (joined) {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) =>
+                                    MembersNearScreen(name: widget.name)));
+                          }
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.all(16),
+                          height: 94,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: const [
+                                      Text(
+                                        "Near members to you",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    "Find and contact with members within\n80km range",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppTheme.primaryColor,
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const Align(
-            alignment: Alignment.topLeft,
-            child: SafeArea(child: BackButton()),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: CustomBottomBar(
-              store: HomeScreenStore(),
+              ],
             ),
-          )
-        ],
-      ),
-    );
+            const Align(
+              alignment: Alignment.topLeft,
+              child: SafeArea(child: BackButton()),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: CustomBottomBar(
+                store: HomeScreenStore(),
+              ),
+            )
+          ],
+        ),
+      );
+    } on Exception {
+      return Container();
+    }
   }
 
   void dispose() {
