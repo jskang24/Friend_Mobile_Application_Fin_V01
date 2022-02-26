@@ -7,6 +7,50 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:91638650298:android:c0743f5fd090f1f7503983",
+        "android_client_info": {
+          "package_name": "com.accessible_web.friend_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "91638650298-vbm2fotom8s5op93rccs8rt4sdhcejtp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.accessible_web.friend_app",
+            "certificate_hash": "c154287fe43646289a0e52ea444b5233e61c688d"
+          }
+        },
+        {
+          "client_id": "91638650298-s3j6h1onhtkk2rbu1620vcg7an3hhem9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABlWU7UWbQRXqPR23yKqVvIsmAzOhkvIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "91638650298-s3j6h1onhtkk2rbu1620vcg7an3hhem9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "91638650298-p58q03h1imcrkohkbrj8mi2jv92s7h62.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.friendMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:91638650298:android:0bc90312dc740b6f503983",
         "android_client_info": {
           "package_name": "com.example.friend_mobile"
